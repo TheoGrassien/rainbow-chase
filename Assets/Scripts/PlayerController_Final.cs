@@ -1,19 +1,29 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+
 public class PlayerController : MonoBehaviour
 {
-    private const float GRAVITY_VALUE = -19.81f;    
+    private const float GRAVITY_VALUE = -19.81f;   
 
-    [SerializeField] private float m_Speed = 5.0f;  
+
+    [SerializeField] private float m_Speed = 10.0f;  
     [SerializeField] private float m_JumpHeight = 1.0f; 
-    [SerializeField] private float m_TurnSmoothTime = 0.1f; 
 
     private CharacterController m_Character;    
-    private float m_JumpVelocity;   
-    private float m_TurnSmoothVelocity; 
+    [SerializeField] private  float m_JumpVelocity;   
 
     private Vector2 m_MoveVector;   
+
+    [SerializeField] private int targetLane = 1; // 0: left, 1: middle, 2: right
+    private float targetPosition = 0;
+
+    private Vector3 moveDir = Vector3.zero;
+    private bool isMoving = false;
+
+    private void Start() {
+        SetTargetPosition();
+    }
 
     #region Initialization  
     private void OnEnable()
@@ -30,49 +40,15 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()  
     {
-        Move(); 
-
         ApplyGravity(); 
     }
 
-    public void ReadMoveInput(InputAction.CallbackContext context)  
+    private void Update()
     {
-        m_MoveVector = context.ReadValue<Vector2>();    
-    }   
-
-    private void Move() 
-    {
-        // Find the direction
-        // Vector3 direction = new Vector3(m_MoveVector.x, 0f, m_MoveVector.y);    
-
-        // if (direction.magnitude >= 0.1f)    
-        // {
-        //     // Get direction angle from direction vector
-        //     float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;  
-
-        //     // Add camera rotation to move based on camera forward
-        //     targetAngle += Camera.main.transform.eulerAngles.y; 
-
-        //     // Smooth the angle over time to avoid snappy rotation
-        //     float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref m_TurnSmoothVelocity, m_TurnSmoothTime);  
-
-        //     // Apply smoothed rotation
-        //     transform.rotation = Quaternion.Euler(0f, angle, 0f);   
-
-        //     // Convert direction angle into a moving vector
-        //     Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;  
-
-        //     // Apply movement
-        //     m_Character.Move(moveDir.normalized * m_Speed * Time.deltaTime);    
-        // }
-
-        // Move to left
-        if (m_MoveVector.x < 0)
-        {
-            Jump();
-            transform.position = new Vector3(-2, transform.position.y, transform.position.z);
-        }
+        PlacePlayer();
     }
+
+    
 
     private void ApplyGravity() 
     {
@@ -87,7 +63,80 @@ public class PlayerController : MonoBehaviour
         m_JumpVelocity += GRAVITY_VALUE * Time.deltaTime;   
 
         // Apply velocity
-        m_Character.Move(Vector3.up * m_JumpVelocity * Time.deltaTime); 
+        m_Character.Move(m_JumpVelocity * Time.deltaTime * Vector3.up); 
+    }
+
+    private void SetTargetPosition() {
+        switch (targetLane) {
+            case 0:
+                targetPosition = -2;
+                break;
+            case 1:
+                targetPosition = 0;
+                break;
+            case 2:
+                targetPosition = 2;
+                break;
+        }
+    }
+
+    private void PlacePlayer() {
+        if (!isMoving) {
+            return;
+        }
+
+        // Apply movement
+        m_Character.Move(moveDir.normalized * m_Speed * Time.deltaTime);
+
+        // If player has reached the target position, stop moving and place it exactly at the target position
+        if (moveDir.x > 0) {
+            if ( transform.position.x > targetPosition ){
+            transform.position = new Vector3(targetPosition, transform.position.y, transform.position.z);
+            isMoving = false;
+        }
+        } else {
+             if ( transform.position.x < targetPosition ){
+            transform.position = new Vector3(targetPosition, transform.position.y, transform.position.z);
+            isMoving = false;
+        }
+        }    
+
+        
+
+    }
+
+    public void MoveLeft() 
+    {
+        if (isMoving) {
+            return;
+        }
+
+        targetLane--;
+        // Block player from moving out of bounds
+        if (targetLane == -1) {
+            targetLane = 0;
+        }
+
+        moveDir = Vector3.left;
+        SetTargetPosition();
+        isMoving = true;
+    }
+
+    public void MoveRight() 
+    {
+        if (isMoving) {
+            return;
+        }
+
+        targetLane++;
+        // Block player from moving out of bounds
+        if (targetLane > 2) {
+            targetLane = 2;
+        }
+
+        moveDir = Vector3.right;
+        SetTargetPosition();
+        isMoving = true;
     }
 
     public void Jump()  
