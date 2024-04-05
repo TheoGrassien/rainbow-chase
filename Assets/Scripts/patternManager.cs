@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class PatternManager : MonoBehaviour
 {
-    public GameObject[] PatternPrefabs;
+    [SerializeField] private GameObject[] PatternPrefabs;
 
     private float zSpawn = 10;
 
-    private float patternLength = 10;
+    private readonly float patternLength = 10;
 
-    public int numberOfPatterns = 3;
-    public float speed = 5.0f;
+    [SerializeField] private int numberOfPatterns = 3;
+    [SerializeField] private float speed = 5.0f;
 
-    public float speedIncrease = 0.005f;
+    [SerializeField] private float speedIncrease = 0.005f;
 
     private GameObject lastPattern; // Keep track of the last generated pattern
      
@@ -27,12 +27,12 @@ public class PatternManager : MonoBehaviour
         }
     }
 
-    
-
     // Update is called once per frame
     void Update()
     {
         MovePattern();
+        RemovePattern();
+        SpeedUp();
 
         // Generate new pattern when the last pattern's z is less than patternLength * 2
         // NB: We add an extra 1 to the z position to prevent little gaps between patterns
@@ -42,18 +42,6 @@ public class PatternManager : MonoBehaviour
             zSpawn -= patternLength;
             GeneratePattern();
         }
-
-        // Get the first pattern in the scene
-        GameObject firstPattern = GameObject.FindGameObjectsWithTag("Pattern")[0];
-
-        // Destroy the pattern when its z is less than 2 * patternLength
-        if (firstPattern.transform.position.z < -2 * patternLength)
-        {
-            Destroy(firstPattern);
-        }
-
-        // Increase the speed over time
-        speed += speedIncrease ;
     }
 
     private void GeneratePattern()
@@ -73,5 +61,21 @@ public class PatternManager : MonoBehaviour
         }
     }
 
+    private void RemovePattern()
+    {
+        // Get the first pattern in the scene
+        GameObject firstPattern = GameObject.FindGameObjectsWithTag("Pattern")[0];
 
+        // Destroy the pattern when its z is less than 2 * patternLength
+        if (firstPattern.transform.position.z < -2 * patternLength)
+        {
+            Destroy(firstPattern);
+        }
+    }
+
+    private void SpeedUp()
+    {
+        // Increase the speed over time
+        speed += speedIncrease ;
+    }
 }

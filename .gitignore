@@ -73,4 +73,4 @@ crashlytics-build.properties
 
 .DS_Store
 
-.psd
+*.psd

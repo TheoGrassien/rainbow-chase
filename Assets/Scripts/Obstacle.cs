@@ -19,6 +19,7 @@ public class Obstacle : MonoBehaviour
         {
             // Appeler la méthode GameOver
             m_gameManager.gameOver = true;
+
         }
 
     }
